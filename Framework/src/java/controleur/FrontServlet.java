@@ -16,31 +16,7 @@ import javax.servlet.http.HttpServletResponse;
  * @author judi
  */
 public class FrontServlet extends HttpServlet {
-    String page;
-    String methode;
 
-    public String getPage() {
-        return page;
-    }
-
-    public void setPage(String page) {
-        this.page = page;
-    }
-
-    public String getMethode() {
-        return methode;
-    }
-
-    public void setMethode(String methode) {
-        this.methode = methode;
-    }
-    public void setPageUrl(String url){
-        this.setPage(url.split("/")[1]);
-    }
-    public void setMethodeURL(String url){
-        if(url.split("/").length > 2)this.setMethode(url.split("/")[2]);
-        else this.setMethode(null);
-    }
     
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -64,10 +40,7 @@ public class FrontServlet extends HttpServlet {
             out.println("<body>");
             out.println("<h1>Servlet FrontServlet at " + request.getContextPath() + "</h1>");
             String path = request.getServletPath();
-            this.setPageUrl(path);
-            this.setMethodeURL(path);
-            out.print("page = " + this.getPage() + "<br>");
-            out.print("methode = " + this.getMethode());
+            out.print("url = " + path + "<br>");
             out.println("</body>");
             out.println("</html>");
         }
