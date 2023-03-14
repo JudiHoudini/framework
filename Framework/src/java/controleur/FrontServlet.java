@@ -2,12 +2,10 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
  */
-package etu2089.framework.servlet;
+package controleur;
 
-import etu2089.framework.Mapping;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.HashMap;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -18,17 +16,31 @@ import javax.servlet.http.HttpServletResponse;
  * @author judi
  */
 public class FrontServlet extends HttpServlet {
-    HashMap<String, Mapping> mappingUrls;
+    String page;
+    String methode;
 
-    public HashMap<String, Mapping> getMappingUrls() {
-        return mappingUrls;
+    public String getPage() {
+        return page;
     }
 
-    public void setMappingUrls(HashMap<String, Mapping> mappingUrls) {
-        this.mappingUrls = mappingUrls;
+    public void setPage(String page) {
+        this.page = page;
     }
-    
-    
+
+    public String getMethode() {
+        return methode;
+    }
+
+    public void setMethode(String methode) {
+        this.methode = methode;
+    }
+    public void setPageUrl(String url){
+        this.setPage(url.split("/")[1]);
+    }
+    public void setMethodeURL(String url){
+        if(url.split("/").length > 2)this.setMethode(url.split("/")[2]);
+        else this.setMethode(null);
+    }
     
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -52,7 +64,10 @@ public class FrontServlet extends HttpServlet {
             out.println("<body>");
             out.println("<h1>Servlet FrontServlet at " + request.getContextPath() + "</h1>");
             String path = request.getServletPath();
-            out.print(path);
+            this.setPageUrl(path);
+            this.setMethodeURL(path);
+            out.print("page = " + this.getPage() + "<br>");
+            out.print("methode = " + this.getMethode());
             out.println("</body>");
             out.println("</html>");
         }
