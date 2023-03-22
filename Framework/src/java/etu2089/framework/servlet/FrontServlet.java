@@ -5,8 +5,11 @@
 package etu2089.framework.servlet;
 
 import etu2089.framework.Mapping;
+import etu2089.framework.annotation.Url;
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -28,7 +31,41 @@ public class FrontServlet extends HttpServlet {
         this.mappingUrls = mappingUrls;
     }
     
-    
+    @Override
+    public void init() throws ServletException {
+        mappingUrls=new HashMap<>();
+        File folder=new File("/home/judi/IdeaProjects/framework/Framework/src/java/etu2089/framework/dataObject");
+        File[]files=folder.listFiles();
+        for(File file:files){
+            String fileName=file.getName().split(".java")[0];
+            Class<?> classTemp=null;
+            try {
+                classTemp = Class.forName("etu2089.framework.dataObject."+fileName);
+            } catch (ClassNotFoundException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            Object obj=null;
+            try {
+                obj = classTemp.newInstance();
+            } catch (InstantiationException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (IllegalAccessException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            Method[] methods=obj.getClass().getDeclaredMethods();
+            for (Method method : methods) {
+                if(method.isAnnotationPresent(Url.class)){
+                    String url=method.getAnnotation(Url.class).url();
+                    String className=obj.getClass().getSimpleName();
+                    String methodName=method.getName();
+                    mappingUrls.put(url,new Mapping(className,methodName));
+                }
+            }
+        } 
+    }
     
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -53,6 +90,8 @@ public class FrontServlet extends HttpServlet {
             out.println("<h1>Servlet FrontServlet at " + request.getContextPath() + "</h1>");
             String path = request.getServletPath();
             out.print(path);
+            out.print(getMappingUrls().get(path).getClassName());
+            out.print(getMappingUrls().get(path).getMethod());
             out.println("</body>");
             out.println("</html>");
         }
