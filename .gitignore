@@ -1,1 +1,5 @@
 /Framework/dist/
+/Framework/nbproject/private/
+/test-framework/nbproject/private/
+/Framework/build/
+/test-framework/build/
