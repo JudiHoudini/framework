@@ -5,6 +5,7 @@
 package etu2089.framework.dataObject;
 
 import etu2089.framework.annotation.Url;
+import etu2089.framework.view.ModeleView;
 
 /**
  *
@@ -12,5 +13,8 @@ import etu2089.framework.annotation.Url;
  */
 public class Emp {
     @Url(url="appelMoi")
-    public void employee(){}
+    public ModeleView getListeEmp(){
+        ModeleView valiny = new ModeleView("listeEmp.jsp");
+        return valiny;
+    }
 }

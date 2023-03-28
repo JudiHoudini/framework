@@ -6,11 +6,14 @@ package etu2089.framework.servlet;
 
 import etu2089.framework.Mapping;
 import etu2089.framework.annotation.Url;
+import etu2089.framework.view.ModeleView;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -60,7 +63,7 @@ public class FrontServlet extends HttpServlet {
             for (Method method : methods) {
                 if(method.isAnnotationPresent(Url.class)){
                     String url=method.getAnnotation(Url.class).url();
-                    String className=obj.getClass().getSimpleName();
+                    String className=obj.getClass().getName();
                     String methodName=method.getName();
                     mappingUrls.put(url,new Mapping(className,methodName));
                 }
@@ -92,10 +95,35 @@ public class FrontServlet extends HttpServlet {
             out.println("<body>");
             out.println("<h1>Servlet FrontServlet at " + request.getContextPath() + "</h1>");
             //out.print(mappingUrls.values());
-            out.print(getMappingUrls().get("appelMoi").getClassName());
+            String url = request.getServletPath();
+            String[] link = url.split("/");
+            url = link[1];
+            out.print(url);
+            try {
+                if(getView(url)!=null){
+                    ModeleView vue = getView(url);
+                    String page = vue.getView();
+                    RequestDispatcher dispatch = request.getRequestDispatcher(page);
+                    dispatch.forward(request, response);
+                }
+            } catch (Exception e) {
+            }
             out.println("</body>");
             out.println("</html>");
         }
+    }
+    
+    public ModeleView getView(String url) throws ClassNotFoundException, InstantiationException, IllegalAccessException, NoSuchMethodException, IllegalArgumentException, InvocationTargetException{
+        ModeleView valiny= null;
+        if(getMappingUrls().get(url) instanceof Mapping){
+            Mapping util = getMappingUrls().get(url);
+            Class classname =  Class.forName(util.getClassName());
+            Object test = classname.newInstance();
+            Method method = test.getClass().getMethod(util.getMethod());
+            Object page = method.invoke(test);
+            valiny = (ModeleView) page;
+        }
+        return valiny;
     }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
