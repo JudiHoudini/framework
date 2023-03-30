@@ -1,6 +1,11 @@
-jar cf Framework/dist/Framework.jar Framework/build/classes/etu2089
-cp Framework/dist/Framework.jar test-framework/build/web/WEB-INF/lib
-jar cf test-framework/build/test-framework.war test-framework/build/web
-cp test-framework/build/test-framework.war /home/judi/Documents/apache-tomcat/webapps
+cp -R Framework/build/classes jar
+cd jar/classes
+jar cf ../../Framework.jar *
+cd ../../
+cp Framework.jar test-framework/build/web/WEB-INF/lib
+cp -R test-framework/build/web/ war
+cd war/web
+jar cf ../../test-framework.war *
+cp ../../test-framework.war /home/judi/Documents/apache-tomcat/webapps
 
 
