@@ -1,0 +1,4 @@
+2023-03-28 15:21:29.340 EAT [40764] LOG:  redirection des traces vers le processus de récupération des traces
+2023-03-28 15:21:29.340 EAT [40764] ASTUCE :  Les prochaines traces apparaîtront dans le répertoire « log ».
+2023-03-28 15:21:50.445 EAT [40852] LOG:  redirection des traces vers le processus de récupération des traces
+2023-03-28 15:21:50.445 EAT [40852] ASTUCE :  Les prochaines traces apparaîtront dans le répertoire « log ».

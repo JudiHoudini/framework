@@ -6,15 +6,51 @@ package etu2089.framework.dataObject;
 
 import etu2089.framework.annotation.Url;
 import etu2089.framework.view.ModeleView;
+import java.util.Vector;
 
 /**
  *
  * @author judi
  */
 public class Emp {
-    @Url(url="appelMoi")
+    String nom;
+    String prenom;
+
+    public String getNom() {
+        return nom;
+    }
+
+    public void setNom(String nom) {
+        this.nom = nom;
+    }
+
+    public String getPrenom() {
+        return prenom;
+    }
+
+    public void setPrenom(String prenom) {
+        this.prenom = prenom;
+    }
+
+    public Emp(String nom, String prenom) {
+        this.setNom(nom);
+        this.setPrenom(prenom);
+    }
+    
+
+    public Emp() {
+    }
+    
+    
+    @Url(url="emp-all")
     public ModeleView getListeEmp(){
         ModeleView valiny = new ModeleView("listeEmp.jsp");
+        Vector<Emp> ls = new Vector<>();
+        ls.add(new Emp("Jean","Marc"));
+        ls.add(new Emp("Jean","Yves"));
+        ls.add(new Emp("Jean","Charles"));
+        ls.add(new Emp("Bob","Alice"));
+        valiny.addItem("liste", ls);
         return valiny;
     }
 }

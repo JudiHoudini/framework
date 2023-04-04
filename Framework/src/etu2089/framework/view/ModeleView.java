@@ -4,23 +4,39 @@
  */
 package etu2089.framework.view;
 
+import java.util.HashMap;
+
 /**
  *
  * @author judi
  */
 public class ModeleView {
-    String view;
+    String url;
+    HashMap<String, Object> data;
 
-    public String getView() {
-        return view;
+    public String getUrl() {
+        return url;
     }
 
-    public void setView(String view) {
-        this.view = view;
+    public void setUrl(String view) {
+        this.url = view;
     }
 
+    public HashMap<String, Object> getData() {
+        return data;
+    }
+
+    public void setData(HashMap<String, Object> data) {
+        this.data = data;
+    }
+
+    
     public ModeleView(String view) {
-        this.setView(view);
+        this.setUrl(view);
+        this.setData(new HashMap<>());
+    }
+    public void addItem(String key,Object Value){
+        this.getData().put(key, Value);
     }
     
 }

@@ -13,6 +13,7 @@ import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.Map;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -102,11 +103,17 @@ public class FrontServlet extends HttpServlet {
             try {
                 if(getView(url)!=null){
                     ModeleView vue = getView(url);
-                    String page = vue.getView();
+                    String page = vue.getUrl();
+                    for (Map.Entry m: vue.getData().entrySet()) {
+                        request.setAttribute((String) m.getKey(), m.getValue());
+                    }
                     RequestDispatcher dispatch = request.getRequestDispatcher(page);
                     dispatch.forward(request, response);
+                }else{
+                    out.print("url inconnu");
                 }
             } catch (Exception e) {
+                
             }
             out.println("</body>");
             out.println("</html>");
