@@ -10,8 +10,11 @@ import etu2089.framework.view.ModeleView;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import javax.servlet.RequestDispatcher;
@@ -100,9 +103,25 @@ public class FrontServlet extends HttpServlet {
             String[] link = url.split("/");
             url = link[1];
             out.print(url);
+            ModeleView vue;
             try {
                 if(getView(url)!=null){
-                    ModeleView vue = getView(url);
+                    if(url.contains("save")){
+                        Enumeration<String> parameters = request.getParameterNames();
+                        String[] attributs = new String[0];
+                        String[] values = new String[0];
+                        while(parameters.hasMoreElements()){
+                            String parametre = parameters.nextElement();
+                            String value = request.getParameter(parametre);
+                            attributs = Arrays.copyOf(attributs, attributs.length + 1);
+                            values = Arrays.copyOf(values, values.length + 1);
+                            attributs[attributs.length - 1] = parametre;
+                            values[values.length - 1]  = value;
+                        }
+                        vue = this.save(url, attributs, values);
+                    }else{
+                        vue = getView(url);
+                    }
                     String page = vue.getUrl();
                     for (Map.Entry m: vue.getData().entrySet()) {
                         request.setAttribute((String) m.getKey(), m.getValue());
@@ -131,6 +150,40 @@ public class FrontServlet extends HttpServlet {
             valiny = (ModeleView) page;
         }
         return valiny;
+    }
+    public ModeleView save(String url,String[] params,String[] values) throws ClassNotFoundException, InstantiationException, IllegalAccessException, NoSuchMethodException, IllegalArgumentException, InvocationTargetException{
+        String classname = this.getMappingUrls().get(url).getClassName();
+        String methode = this.getMappingUrls().get(url).getMethod();
+        Class<?> classe = Class.forName(classname);
+        Object objet = classe.newInstance();
+        Field[] fields = classe.getDeclaredFields();
+        String[] allparm = new String[0];
+        for(Field field : fields){
+            for(int i = 0;i < params.length;i++){
+                if(params[i].equals(field.getName())){
+                    Method setobject = classe.getMethod("set"+this.upperFirst(params[i]),field.getType());
+                    Object type = null;
+                    if (field.getType() == String.class) {
+                        type = values[i];
+                    } else if (field.getType() == int.class || field.getType() == Integer.class) {
+                        type = Integer.valueOf(values[i]);
+                    } else if (field.getType() == double.class || field.getType() == Double.class) {
+                        type = Double.valueOf(values[i]);
+                    } else if (field.getType() == boolean.class || field.getType() == Boolean.class) {
+                        type = Boolean.valueOf(values[i]);
+                    }
+                    allparm = Arrays.copyOf(allparm,allparm.length + 1);
+                    allparm[allparm.length - 1] = type.getClass().getName();
+                    setobject.invoke(objet, type);
+                }
+            }
+        }
+        Method method = classe.getDeclaredMethod(methode);
+        ModeleView mv = (ModeleView)method.invoke(objet);
+        return mv;
+    }
+    public String upperFirst(String text){
+        return text.substring(0,1).toUpperCase()+text.substring(1);
     }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
