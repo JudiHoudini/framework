@@ -53,4 +53,12 @@ public class Emp {
         valiny.addItem("liste", ls);
         return valiny;
     }
+    @Url(url="emp-save")
+    public ModeleView save(){
+        ModeleView valiny = new ModeleView("listeEmp.jsp");
+        Vector<Emp> ls = new Vector<>();
+        ls.add(this);
+        valiny.addItem("liste",ls);
+        return valiny;
+    }
 }
