@@ -15,6 +15,7 @@
         <form action="emp-save" method="POST">
             <input type="text" id="id" name="nom">
             <input type="text" id="id" name="prenom">
+            <input type="number" id="id" name="age">
             <input type="submit" value="enregistrer">
         </form>
         
