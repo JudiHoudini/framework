@@ -27,10 +27,11 @@
             </thead>
             <tbody>
                 <%
-                    for (Emp elem : liste) {
+                    for(Emp elem : liste) {
                         out.print("<tr>");
                         out.print("<td>"+elem.getNom()+"</td>");
                         out.print("<td>"+elem.getPrenom()+"</td>");
+                        out.print("<td>"+elem.getAge()+"</td>");
                         out.print("</tr>");
                     }
                 %>

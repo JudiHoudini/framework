@@ -15,6 +15,7 @@ import java.util.Vector;
 public class Emp {
     String nom;
     String prenom;
+    int age;
 
     public String getNom() {
         return nom;
@@ -31,6 +32,15 @@ public class Emp {
     public void setPrenom(String prenom) {
         this.prenom = prenom;
     }
+
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+    
 
     public Emp(String nom, String prenom) {
         this.setNom(nom);
@@ -53,7 +63,18 @@ public class Emp {
         valiny.addItem("liste", ls);
         return valiny;
     }
-    @Url(url="emp-save")
+    @Url(url="emp-detail")
+    public ModeleView getDetailEmp(Integer id){
+        ModeleView valiny = new ModeleView("listeEmp.jsp");
+        Vector<Emp> ls = new Vector<>();
+        ls.add(new Emp("Jean","Marc"));
+        ls.add(new Emp("Jean","Yves"));
+        ls.add(new Emp("Jean","Charles"));
+        ls.add(new Emp("Bob","Alice"));
+        valiny.addItem("liste", ls.get(id));
+        return valiny;
+    }
+    @Url(url="emp-savy")
     public ModeleView save(){
         ModeleView valiny = new ModeleView("listeEmp.jsp");
         Vector<Emp> ls = new Vector<>();
@@ -61,4 +82,14 @@ public class Emp {
         valiny.addItem("liste",ls);
         return valiny;
     }
+    @Url(url="emp-save")
+    public ModeleView savy(Integer age){
+        ModeleView valiny = new ModeleView("listeEmp.jsp");
+        Vector<Emp> ls = new Vector<>();
+        this.setAge(this.getAge()+age);
+        ls.add(this);
+        valiny.addItem("liste",ls);
+        return valiny;
+    }
+    
 }
