@@ -4,7 +4,9 @@
  */
 package etu2089.framework.view;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  *
@@ -15,6 +17,24 @@ public class ModeleView {
     HashMap<String, Object> data;
     HashMap<String,Object> sessions;
     boolean json;
+    boolean invalidateSession = false;
+    List<String> removeSession;
+
+    public boolean isInvalidateSession() {
+        return invalidateSession;
+    }
+
+    public void setInvalidateSession(boolean invalidateSession) {
+        this.invalidateSession = invalidateSession;
+    }
+
+    public List<String> getRemoveSession() {
+        return removeSession;
+    }
+
+    public void setRemoveSession(List<String> removeSession) {
+        this.removeSession = removeSession;
+    }
 
     public String getUrl() {
         return url;
@@ -54,12 +74,16 @@ public class ModeleView {
         this.setUrl(view);
         this.setData(new HashMap<>());
         this.setSessions(new HashMap<>());
+        this.setRemoveSession(new ArrayList<>());
     }
     public void addItem(String key,Object Value){
         this.getData().put(key, Value);
     }
      public void addSession(String cle, Object objet){
         this.getSessions().put(cle, objet);
+    }
+     public void addrmSession(String sessionName){
+        this.getRemoveSession().add(sessionName);
     }
     
 }

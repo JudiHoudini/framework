@@ -33,6 +33,7 @@ import java.io.InputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.sql.Date;
+import java.util.ArrayList;
 
 /**
  *
@@ -77,9 +78,9 @@ public class FrontServlet extends HttpServlet {
         File[] files = folder.listFiles();
         Enumeration sessionNames = config.getInitParameterNames();
         HashMap<String, Object> session = new HashMap<>();
-        while(sessionNames.hasMoreElements()){
+        while (sessionNames.hasMoreElements()) {
             String name = (String) sessionNames.nextElement();
-            if(!name.equals("sourceFile")){
+            if (!name.equals("sourceFile")) {
                 String parameterValue = config.getInitParameter(name);
                 session.put(name, parameterValue);
             }
@@ -116,38 +117,39 @@ public class FrontServlet extends HttpServlet {
             }
         }
     }
-    public void checkSingleton(Class check){
-        if(check.isAnnotationPresent(Singleton.class)){
-            
+
+    public void checkSingleton(Class check) {
+        if (check.isAnnotationPresent(Singleton.class)) {
+
             String className = check.getName();
             this.getSingleton().put(className, null);
         }
     }
-    public void reset(Object objet) throws IllegalAccessException, InvocationTargetException{
+
+    public void reset(Object objet) throws IllegalAccessException, InvocationTargetException {
         Field[] fields = objet.getClass().getDeclaredFields();
         for (Field field : fields) {
             String fieldName = upperFirst(field.getName());
             Method methodSet = null;
             try {
-                methodSet = objet.getClass().getMethod("set"+fieldName, field.getType());
+                methodSet = objet.getClass().getMethod("set" + fieldName, field.getType());
             } catch (Exception e) {
                 continue;
             }
-            if(field.getType().equals(int.class)){
+            if (field.getType().equals(int.class)) {
                 methodSet.invoke(objet, 0);
             }
-            if(field.getType().equals(double.class)){
+            if (field.getType().equals(double.class)) {
                 methodSet.invoke(objet, 0);
             }
-            if(field.getType().equals(float.class)){
+            if (field.getType().equals(float.class)) {
                 methodSet.invoke(objet, 0);
             }
-            if(field.getType().equals(Object.class)){
+            if (field.getType().equals(Object.class)) {
                 methodSet.invoke(objet, null);
             }
         }
     }
-    
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -168,7 +170,7 @@ public class FrontServlet extends HttpServlet {
         Enumeration<String> parametres = request.getParameterNames();
         response.setContentType("text/html;charset=UTF-8");
 
-        out.print(url);
+        out.println(url);
         ModeleView vue;
         try {
             Enumeration<String> parameters = request.getParameterNames();
@@ -182,20 +184,21 @@ public class FrontServlet extends HttpServlet {
                 attributs[attributs.length - 1] = parametre;
                 values[values.length - 1] = value;
             }
-            if (getModeleView(url, attributs, values, request,out) != null) {
-                vue = this.getModeleView(url, attributs, values, request,out);
+            if (getModeleView(url, attributs, values, request, out) != null) {
+                vue = this.getModeleView(url, attributs, values, request, out);
                 String page = vue.getUrl();
                 for (Map.Entry m : vue.getData().entrySet()) {
                     request.setAttribute((String) m.getKey(), m.getValue());
                 }
-                 if (!vue.getSessions().isEmpty()) {
+                if (!vue.getSessions().isEmpty()) {
                     fillSessions(request, vue.getSessions());
                 }
-                if(vue.isJson()){
+                this.invalidateSession(request, vue);
+                if (vue.isJson()) {
                     Gson json = new Gson();
                     String jsonString = json.toJson(vue.getData());
                     out.print(jsonString);
-                }else{
+                } else {
                     RequestDispatcher dispatch = request.getRequestDispatcher(page);
                     dispatch.forward(request, response);
                 }
@@ -205,6 +208,7 @@ public class FrontServlet extends HttpServlet {
             e.printStackTrace(out);
         }
     }
+
     public void fillSessions(HttpServletRequest req, HashMap<String, Object> sessionsFromDataObject) {
         for (Map.Entry<String, Object> entry : sessionsFromDataObject.entrySet()) {
             if (sessions.containsValue(entry.getKey())) {
@@ -212,7 +216,8 @@ public class FrontServlet extends HttpServlet {
             }
         }
     }
-    public void checkAuthorisation(Method m, HttpServletRequest req,PrintWriter out) throws Exception {
+
+    public void checkAuthorisation(Method m, HttpServletRequest req, PrintWriter out) throws Exception {
         if (m.isAnnotationPresent(Authentification.class)) {
             int reference = m.getAnnotation(Authentification.class).reference();
             String sessionProfilName = (String) this.sessions.get("sessionName");
@@ -220,27 +225,37 @@ public class FrontServlet extends HttpServlet {
             if (req.getSession().getAttribute(sessionProfilName) == null) {
                 throw new Exception("Vous devriez vous connecter");
             }
-            int userProfil = (int) req.getSession().getAttribute(sessionProfil);
+            int userProfil = 0;
+            if(req.getSession().getAttribute(sessionProfil) != null){
+                userProfil = (int) req.getSession().getAttribute(sessionProfil);
+            }
             if (reference > userProfil) {
                 String exceptionMessage = "Vous n'etes pas en mesure d'appeller cette fonction";
                 throw new Exception(exceptionMessage);
             }
         }
     }
-    public void invalidateSession(HttpServletRequest req,ModelView mv){
-        if(mv.isInvalidateSession()){
+
+    public void invalidateSession(HttpServletRequest req, ModeleView mv) {
+        if (mv.isInvalidateSession()) {
             req.getSession().invalidate();
         }
-        else if(mv.getRemoveSession()!=null){
-            for(String sessionRm : mv.getRemoveSession()){
+        int y = 0;
+        Object rs = mv.getRemoveSession();
+        if (!((ArrayList)rs).isEmpty()) {
+            int x = 0;
+            for (String sessionRm : mv.getRemoveSession()) {
+                Object sessionAttributes = req.getSession().getAttributeNames();
+                Object sessionAttribute = req.getSession().getAttribute(sessionRm);
                 req.getSession().removeAttribute(sessionRm);
             }
         }
     }
-    public void getFileByInput(HttpServletRequest request, Field field) throws IOException, ServletException{
+
+    public void getFileByInput(HttpServletRequest request, Field field) throws IOException, ServletException {
         Part part = null;
         part = request.getPart(field.getName());
-        if(part != null){
+        if (part != null) {
             InputStream inStream = part.getInputStream();
             byte[] fileBytes = inStream.readAllBytes();
             inStream.close();
@@ -248,7 +263,7 @@ public class FrontServlet extends HttpServlet {
             FileUpload fu = new FileUpload();
             fu.setBits(fileBytes);
             fu.setFileName(fileName);
-            System.out.println(fu.getFileName() +"==="+ fu.getBits());
+            System.out.println(fu.getFileName() + "===" + fu.getBits());
         }
     }
 
@@ -262,26 +277,26 @@ public class FrontServlet extends HttpServlet {
         }
         return valiny;
     }
-    public Object getInClassInstance(String className,Class<?> classe) throws IllegalAccessException, InvocationTargetException, InstantiationException{
+
+    public Object getInClassInstance(String className, Class<?> classe) throws IllegalAccessException, InvocationTargetException, InstantiationException {
         Object objet = null;
-        if(this.getSingleton().containsKey(className)){
+        if (this.getSingleton().containsKey(className)) {
             Object obj = this.getSingleton().get(className);
-            if(obj == null){
+            if (obj == null) {
                 obj = classe.newInstance();
                 objet = obj;
                 this.getSingleton().put(className, objet);
-            }else{
+            } else {
                 reset(obj);
                 objet = obj;
             }
-        }
-        else{
+        } else {
             objet = classe.newInstance();
         }
         return objet;
     }
 
-    public ModeleView getModeleView(String url, String[] params, String[] values, HttpServletRequest req,PrintWriter out) throws ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, IOException, ServletException {
+    public ModeleView getModeleView(String url, String[] params, String[] values, HttpServletRequest req, PrintWriter out) throws ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, IOException, ServletException {
         ModeleView valiny = null;
         if (getMappingUrls().get(url) instanceof Mapping) {
             Mapping util = getMappingUrls().get(url);
@@ -307,8 +322,9 @@ public class FrontServlet extends HttpServlet {
                             type = Boolean.valueOf(values[i]);
                         }
                         allparm = Arrays.copyOf(allparm, allparm.length + 1);
-                        if(type != null)
+                        if (type != null) {
                             allparm[allparm.length - 1] = type.getClass().getName();
+                        }
                         setobject.invoke(test, type);
                     }
                 }
@@ -337,7 +353,7 @@ public class FrontServlet extends HttpServlet {
             } catch (Exception e) {
                 out.print(e.getMessage());
             }
-            
+
         }
         return valiny;
     }
@@ -377,8 +393,9 @@ public class FrontServlet extends HttpServlet {
                         type = Boolean.valueOf(values[i]);
                     }
                     allparm = Arrays.copyOf(allparm, allparm.length + 1);
-                    if(type != null)
+                    if (type != null) {
                         allparm[allparm.length - 1] = type.getClass().getName();
+                    }
                     setobject.invoke(objet, type);
                 }
             }
@@ -391,8 +408,6 @@ public class FrontServlet extends HttpServlet {
     public String upperFirst(String text) {
         return text.substring(0, 1).toUpperCase() + text.substring(1);
     }
-
-    
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
     /**

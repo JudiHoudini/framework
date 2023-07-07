@@ -18,6 +18,6 @@
             <input type="number" id="id" name="age">
             <input type="submit" value="enregistrer">
         </form>
-        
+        <a href="logout"><input type="button" value="Button"></a>
     </body>
 </html>
