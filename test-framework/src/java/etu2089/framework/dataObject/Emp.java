@@ -65,6 +65,7 @@ public class Emp {
         ls.add(new Emp("Jean","Charles"));
         ls.add(new Emp("Bob","Alice"));
         valiny.addItem("liste", ls);
+        valiny.setIsJson(true);
         return valiny;
     }
     @Url(url="emp-detail")

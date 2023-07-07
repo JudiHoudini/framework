@@ -13,6 +13,7 @@ import java.util.HashMap;
 public class ModeleView {
     String url;
     HashMap<String, Object> data;
+    boolean json;
 
     public String getUrl() {
         return url;
@@ -29,6 +30,15 @@ public class ModeleView {
     public void setData(HashMap<String, Object> data) {
         this.data = data;
     }
+
+    public boolean isJson() {
+        return json;
+    }
+
+    public void setIsJson(boolean isJson) {
+        this.json = isJson;
+    }
+    
 
     
     public ModeleView(String view) {
