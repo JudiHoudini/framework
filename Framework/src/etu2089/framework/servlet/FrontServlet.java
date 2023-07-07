@@ -6,6 +6,7 @@ package etu2089.framework.servlet;
 
 import com.google.gson.Gson;
 import etu2089.framework.Mapping;
+import etu2089.framework.annotation.Authentification;
 import etu2089.framework.annotation.Singleton;
 import etu2089.framework.annotation.Url;
 import etu2089.framework.fileUpload.FileUpload;
@@ -41,6 +42,7 @@ public class FrontServlet extends HttpServlet {
 
     HashMap<String, Mapping> mappingUrls;
     HashMap<String, Object> singleton;
+    HashMap<String, Object> sessions;
 
     public HashMap<String, Mapping> getMappingUrls() {
         return mappingUrls;
@@ -58,6 +60,14 @@ public class FrontServlet extends HttpServlet {
         this.singleton = singleton;
     }
 
+    public HashMap<String, Object> getSessions() {
+        return sessions;
+    }
+
+    public void setSessions(HashMap<String, Object> sessions) {
+        this.sessions = sessions;
+    }
+
     @Override
     public void init(ServletConfig config) throws ServletException {
         mappingUrls = new HashMap<>();
@@ -65,6 +75,16 @@ public class FrontServlet extends HttpServlet {
         String rootPackage = config.getInitParameter("rootPackage");
         File folder = new File(rootPackage);
         File[] files = folder.listFiles();
+        Enumeration sessionNames = config.getInitParameterNames();
+        HashMap<String, Object> session = new HashMap<>();
+        while(sessionNames.hasMoreElements()){
+            String name = (String) sessionNames.nextElement();
+            if(!name.equals("sourceFile")){
+                String parameterValue = config.getInitParameter(name);
+                session.put(name, parameterValue);
+            }
+        }
+        this.setSessions(session);
         for (File file : files) {
             String fileName = file.getName().split(".java")[0];
             Class<?> classTemp = null;
@@ -162,11 +182,14 @@ public class FrontServlet extends HttpServlet {
                 attributs[attributs.length - 1] = parametre;
                 values[values.length - 1] = value;
             }
-            if (getModeleView(url, attributs, values, request) != null) {
-                vue = this.getModeleView(url, attributs, values, request);
+            if (getModeleView(url, attributs, values, request,out) != null) {
+                vue = this.getModeleView(url, attributs, values, request,out);
                 String page = vue.getUrl();
                 for (Map.Entry m : vue.getData().entrySet()) {
                     request.setAttribute((String) m.getKey(), m.getValue());
+                }
+                 if (!vue.getSessions().isEmpty()) {
+                    fillSessions(request, vue.getSessions());
                 }
                 if(vue.isJson()){
                     Gson json = new Gson();
@@ -180,6 +203,38 @@ public class FrontServlet extends HttpServlet {
             int x = 8;
         } catch (Exception e) {
             e.printStackTrace(out);
+        }
+    }
+    public void fillSessions(HttpServletRequest req, HashMap<String, Object> sessionsFromDataObject) {
+        for (Map.Entry<String, Object> entry : sessionsFromDataObject.entrySet()) {
+            if (sessions.containsValue(entry.getKey())) {
+                req.getSession().setAttribute(entry.getKey(), entry.getValue());
+            }
+        }
+    }
+    public void checkAuthorisation(Method m, HttpServletRequest req,PrintWriter out) throws Exception {
+        if (m.isAnnotationPresent(Authentification.class)) {
+            int reference = m.getAnnotation(Authentification.class).reference();
+            String sessionProfilName = (String) this.sessions.get("sessionName");
+            String sessionProfil = (String) this.sessions.get("sessionProfil");
+            if (req.getSession().getAttribute(sessionProfilName) == null) {
+                throw new Exception("Vous devriez vous connecter");
+            }
+            int userProfil = (int) req.getSession().getAttribute(sessionProfil);
+            if (reference > userProfil) {
+                String exceptionMessage = "Vous n'etes pas en mesure d'appeller cette fonction";
+                throw new Exception(exceptionMessage);
+            }
+        }
+    }
+    public void invalidateSession(HttpServletRequest req,ModelView mv){
+        if(mv.isInvalidateSession()){
+            req.getSession().invalidate();
+        }
+        else if(mv.getRemoveSession()!=null){
+            for(String sessionRm : mv.getRemoveSession()){
+                req.getSession().removeAttribute(sessionRm);
+            }
         }
     }
     public void getFileByInput(HttpServletRequest request, Field field) throws IOException, ServletException{
@@ -226,7 +281,7 @@ public class FrontServlet extends HttpServlet {
         return objet;
     }
 
-    public ModeleView getModeleView(String url, String[] params, String[] values, HttpServletRequest req) throws ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, IOException, ServletException {
+    public ModeleView getModeleView(String url, String[] params, String[] values, HttpServletRequest req,PrintWriter out) throws ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, IOException, ServletException {
         ModeleView valiny = null;
         if (getMappingUrls().get(url) instanceof Mapping) {
             Mapping util = getMappingUrls().get(url);
@@ -276,7 +331,13 @@ public class FrontServlet extends HttpServlet {
                     }
                 }
             }
-            valiny = (ModeleView) m.invoke(test, tableau);
+            try {
+                this.checkAuthorisation(m, req, out);
+                valiny = (ModeleView) m.invoke(test, tableau);
+            } catch (Exception e) {
+                out.print(e.getMessage());
+            }
+            
         }
         return valiny;
     }

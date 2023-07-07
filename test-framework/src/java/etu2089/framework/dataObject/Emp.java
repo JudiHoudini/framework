@@ -4,6 +4,7 @@
  */
 package etu2089.framework.dataObject;
 
+import etu2089.framework.annotation.Authentification;
 import etu2089.framework.annotation.Singleton;
 import etu2089.framework.annotation.Url;
 import etu2089.framework.fileUpload.FileUpload;
@@ -55,7 +56,7 @@ public class Emp {
     public Emp() {
     }
     
-    
+    @Authentification(reference = 1,value = "Admin")
     @Url(url="emp-all")
     public ModeleView getListeEmp(){
         ModeleView valiny = new ModeleView("listeEmp.jsp");
@@ -65,7 +66,7 @@ public class Emp {
         ls.add(new Emp("Jean","Charles"));
         ls.add(new Emp("Bob","Alice"));
         valiny.addItem("liste", ls);
-        valiny.setIsJson(true);
+        //valiny.setIsJson(true);
         return valiny;
     }
     @Url(url="emp-detail")
