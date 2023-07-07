@@ -7,6 +7,14 @@
             <param-name>rootPackage</param-name>
             <param-value>/home/judi/IdeaProjects/framework/test-framework/src/java/etu2089/framework/dataObject</param-value>
         </init-param>
+        <init-param>
+            <param-name>sessionName</param-name>
+            <param-value>isConnected</param-value>
+        </init-param>
+        <init-param>
+            <param-name>sessionProfil</param-name>
+            <param-value>profil</param-value>
+        </init-param> 
         <multipart-config>
             <location>/home/judi/Documents</location>
             <max-file-size>1000000</max-file-size>
