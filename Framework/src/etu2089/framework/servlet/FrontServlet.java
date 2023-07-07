@@ -5,8 +5,9 @@
 package etu2089.framework.servlet;
 
 import etu2089.framework.Mapping;
+import etu2089.framework.annotation.Singleton;
 import etu2089.framework.annotation.Url;
-import etu2089.framework.exception.UrlInconue;
+import etu2089.framework.fileUpload.FileUpload;
 import etu2089.framework.view.ModeleView;
 import java.io.File;
 import java.io.IOException;
@@ -25,6 +26,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.Part;
+import java.io.InputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.sql.Date;
@@ -36,6 +39,7 @@ import java.sql.Date;
 public class FrontServlet extends HttpServlet {
 
     HashMap<String, Mapping> mappingUrls;
+    HashMap<String, Object> singleton;
 
     public HashMap<String, Mapping> getMappingUrls() {
         return mappingUrls;
@@ -45,9 +49,18 @@ public class FrontServlet extends HttpServlet {
         this.mappingUrls = mappingUrls;
     }
 
+    public HashMap<String, Object> getSingleton() {
+        return singleton;
+    }
+
+    public void setSingleton(HashMap<String, Object> singleton) {
+        this.singleton = singleton;
+    }
+
     @Override
     public void init(ServletConfig config) throws ServletException {
         mappingUrls = new HashMap<>();
+        singleton = new HashMap<>();
         String rootPackage = config.getInitParameter("rootPackage");
         File folder = new File(rootPackage);
         File[] files = folder.listFiles();
@@ -56,6 +69,7 @@ public class FrontServlet extends HttpServlet {
             Class<?> classTemp = null;
             try {
                 classTemp = Class.forName("etu2089.framework.dataObject." + fileName);
+                this.checkSingleton(classTemp);
             } catch (ClassNotFoundException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -81,6 +95,37 @@ public class FrontServlet extends HttpServlet {
             }
         }
     }
+    public void checkSingleton(Class check){
+        if(check.isAnnotationPresent(Singleton.class)){
+            String className = check.getName();
+            this.getSingleton().put(className, null);
+        }
+    }
+    public void reset(Object objet) throws IllegalAccessException, InvocationTargetException{
+        Field[] fields = objet.getClass().getDeclaredFields();
+        for (Field field : fields) {
+            String fieldName = upperFirst(field.getName());
+            Method methodSet = null;
+            try {
+                methodSet = objet.getClass().getMethod("set"+fieldName, field.getType());
+            } catch (Exception e) {
+                continue;
+            }
+            if(field.getType().equals(int.class)){
+                methodSet.invoke(objet, 0);
+            }
+            if(field.getType().equals(double.class)){
+                methodSet.invoke(objet, 0);
+            }
+            if(field.getType().equals(float.class)){
+                methodSet.invoke(objet, 0);
+            }
+            if(field.getType().equals(Object.class)){
+                methodSet.invoke(objet, null);
+            }
+        }
+    }
+    
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -115,8 +160,8 @@ public class FrontServlet extends HttpServlet {
                 attributs[attributs.length - 1] = parametre;
                 values[values.length - 1] = value;
             }
-            if (getModeleView(url, attributs, values) != null) {
-                vue = this.getModeleView(url, attributs, values);
+            if (getModeleView(url, attributs, values, request) != null) {
+                vue = this.getModeleView(url, attributs, values, request);
                 String page = vue.getUrl();
                 for (Map.Entry m : vue.getData().entrySet()) {
                     request.setAttribute((String) m.getKey(), m.getValue());
@@ -127,6 +172,20 @@ public class FrontServlet extends HttpServlet {
             int x = 8;
         } catch (Exception e) {
             e.printStackTrace(out);
+        }
+    }
+    public void getFileByInput(HttpServletRequest request, Field field) throws IOException, ServletException{
+        Part part = null;
+        part = request.getPart(field.getName());
+        if(part != null){
+            InputStream inStream = part.getInputStream();
+            byte[] fileBytes = inStream.readAllBytes();
+            inStream.close();
+            String fileName = part.getSubmittedFileName();
+            FileUpload fu = new FileUpload();
+            fu.setBits(fileBytes);
+            fu.setFileName(fileName);
+            System.out.println(fu.getFileName() +"==="+ fu.getBits());
         }
     }
 
@@ -140,13 +199,31 @@ public class FrontServlet extends HttpServlet {
         }
         return valiny;
     }
+    public Object getInClassInstance(String className,Class<?> classe) throws IllegalAccessException, InvocationTargetException, InstantiationException{
+        Object objet = null;
+        if(this.getSingleton().containsKey(className)){
+            Object obj = this.getSingleton().get(className);
+            if(obj == null){
+                obj = classe.newInstance();
+                objet = obj;
+                this.getSingleton().put(className, objet);
+            }else{
+                //reset(obj);
+                objet = obj;
+            }
+        }
+        else{
+            objet = classe.newInstance();
+        }
+        return objet;
+    }
 
-    public ModeleView getModeleView(String url, String[] params, String[] values) throws ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException {
+    public ModeleView getModeleView(String url, String[] params, String[] values, HttpServletRequest req) throws ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, IOException, ServletException {
         ModeleView valiny = null;
         if (getMappingUrls().get(url) instanceof Mapping) {
             Mapping util = getMappingUrls().get(url);
             Class classname = Class.forName(util.getClassName());
-            Object test = classname.newInstance();
+            Object test = this.getInClassInstance(classname.getName(), classname);
             Method m = this.getMethod(util.getMethod(), test);
             Field[] fields = classname.getDeclaredFields();
             Parameter[] parametres = m.getParameters();
@@ -167,12 +244,12 @@ public class FrontServlet extends HttpServlet {
                             type = Boolean.valueOf(values[i]);
                         }
                         allparm = Arrays.copyOf(allparm, allparm.length + 1);
-                        allparm[allparm.length - 1] = type.getClass().getName();
+                        if(type != null)
+                            allparm[allparm.length - 1] = type.getClass().getName();
                         setobject.invoke(test, type);
                     }
                 }
             }
-            int x = 0;
             for (int j = 0; j < parametres.length; j++) {
                 for (int i = 0; i < params.length; i++) {
                     if (params[i].equals(parametres[j].getName())) {
@@ -231,7 +308,8 @@ public class FrontServlet extends HttpServlet {
                         type = Boolean.valueOf(values[i]);
                     }
                     allparm = Arrays.copyOf(allparm, allparm.length + 1);
-                    allparm[allparm.length - 1] = type.getClass().getName();
+                    if(type != null)
+                        allparm[allparm.length - 1] = type.getClass().getName();
                     setobject.invoke(objet, type);
                 }
             }
@@ -245,36 +323,7 @@ public class FrontServlet extends HttpServlet {
         return text.substring(0, 1).toUpperCase() + text.substring(1);
     }
 
-    public ModeleView det(String url, String[] params, String[] values, PrintWriter out) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, UrlInconue, InstantiationException {
-        String classname = this.getMappingUrls().get(url).getClassName();
-        String methode = this.getMappingUrls().get(url).getMethod();
-        Class<?> classe = Class.forName(classname);
-        Object objet = classe.newInstance();
-        Method method = classe.getDeclaredMethod(methode, Integer.class);
-        Parameter[] de = method.getParameters();
-        Object[] type = new Object[de.length];
-        for (Parameter param : de) {
-            String nom = param.getName();
-            //out.print("<h3>"+nom+"</h3>");
-            for (int i = 0; i < params.length; i++) {
-                if (params[i].equals(nom)) {
-                    if (param.getType() == Integer.class) {
-                        type[i] = Integer.valueOf(values[0]);
-                    } else if (param.getType() == String.class) {
-                        type[i] = Integer.valueOf(values[i]);
-                    } else if (param.getType() == Double.class) {
-                        type[i] = Double.valueOf(values[i]);
-                    } else if (param.getType() == boolean.class || param.getType() == Boolean.class) {
-                        type[i] = Boolean.valueOf(values[i]);
-                    } else if (param.getType() == Date.class) {
-                        type[i] = Date.valueOf(values[i]);
-                    }
-                }
-            }
-        }
-        ModeleView mv = (ModeleView) method.invoke(objet, type);
-        return mv;
-    }
+    
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
     /**

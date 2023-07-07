@@ -12,7 +12,7 @@
         <title>JSP Page</title>
     </head>
     <body>
-        <form action="emp-save" method="POST">
+        <form action="emp-savy" method="POST">
             <input type="text" id="id" name="nom">
             <input type="text" id="id" name="prenom">
             <input type="number" id="id" name="age">

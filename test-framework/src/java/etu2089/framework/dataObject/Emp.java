@@ -4,7 +4,9 @@
  */
 package etu2089.framework.dataObject;
 
+import etu2089.framework.annotation.Singleton;
 import etu2089.framework.annotation.Url;
+import etu2089.framework.fileUpload.FileUpload;
 import etu2089.framework.view.ModeleView;
 import java.util.Vector;
 
@@ -12,10 +14,12 @@ import java.util.Vector;
  *
  * @author judi
  */
+@Singleton(isSingleton = true)
 public class Emp {
     String nom;
     String prenom;
-    int age;
+    FileUpload fu;
+    int age = 0;
 
     public String getNom() {
         return nom;
@@ -78,6 +82,16 @@ public class Emp {
     public ModeleView save(){
         ModeleView valiny = new ModeleView("listeEmp.jsp");
         Vector<Emp> ls = new Vector<>();
+        this.setAge(this.getAge()+1);
+        ls.add(this);
+        valiny.addItem("liste",ls);
+        return valiny;
+    }
+    @Url(url="singleton")
+    public ModeleView singleton(){
+        ModeleView valiny = new ModeleView("listeEmp.jsp");
+        Vector<Emp> ls = new Vector<>();
+        this.setAge(this.getAge()+1);
         ls.add(this);
         valiny.addItem("liste",ls);
         return valiny;
@@ -90,6 +104,10 @@ public class Emp {
         ls.add(this);
         valiny.addItem("liste",ls);
         return valiny;
+    }
+
+    public void setFu(FileUpload fu) {
+        this.fu = fu;
     }
     
 }

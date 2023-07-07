@@ -7,6 +7,12 @@
             <param-name>rootPackage</param-name>
             <param-value>/home/judi/IdeaProjects/framework/test-framework/src/java/etu2089/framework/dataObject</param-value>
         </init-param>
+        <multipart-config>
+            <location>/home/judi/Documents</location>
+            <max-file-size>1000000</max-file-size>
+            <max-request-size>1000000</max-request-size>
+            <file-size-threshold>0</file-size-threshold>
+        </multipart-config>
     </servlet>
     <servlet-mapping>
         <servlet-name>FrontServlet</servlet-name>
