@@ -89,6 +89,14 @@ public class Emp {
         valiny.addItem("liste",ls);
         return valiny;
     }
+    @Url(url="testsprint")
+    public ModeleView testsprint(){
+        String view = "index.jsp";
+        ModeleView mv = new ModeleView(view);
+        mv.setIsJson(false);
+        mv.addrmSession("profil");
+        return mv;
+    }
     @Url(url="singleton")
     public ModeleView singleton(){
         ModeleView valiny = new ModeleView("listeEmp.jsp");

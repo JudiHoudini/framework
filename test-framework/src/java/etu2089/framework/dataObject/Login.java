@@ -44,13 +44,21 @@ public class Login {
         String view = "addEmp.jsp";
         ModeleView mv = new ModeleView(view);
         mv.setIsJson(false);
-        if(this.getName().equals("Rado") && this.getPass().equals("12345")){
+        if(this.getName().equals("Admin") && this.getPass().equals("Admin")){
             mv.addSession("isConnected", true);
             mv.addSession("profil", 11);
         } else if(this.getName().equals("Autre") && this.getPass().equals("qwertz")){
             mv.addSession("isConnected", true);
             mv.addSession("profil", 1);
         }
+        return mv;
+    }
+    @Url(url="logout")
+    public ModeleView logout(){
+        String view = "index.jsp";
+        ModeleView mv = new ModeleView(view);
+        mv.setIsJson(false);
+        mv.setInvalidateSession(true);
         return mv;
     }
     
