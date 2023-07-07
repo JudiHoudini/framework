@@ -4,6 +4,7 @@
  */
 package etu2089.framework.servlet;
 
+import com.google.gson.Gson;
 import etu2089.framework.Mapping;
 import etu2089.framework.annotation.Singleton;
 import etu2089.framework.annotation.Url;
@@ -97,6 +98,7 @@ public class FrontServlet extends HttpServlet {
     }
     public void checkSingleton(Class check){
         if(check.isAnnotationPresent(Singleton.class)){
+            
             String className = check.getName();
             this.getSingleton().put(className, null);
         }
@@ -166,8 +168,14 @@ public class FrontServlet extends HttpServlet {
                 for (Map.Entry m : vue.getData().entrySet()) {
                     request.setAttribute((String) m.getKey(), m.getValue());
                 }
-                RequestDispatcher dispatch = request.getRequestDispatcher(page);
-                dispatch.forward(request, response);
+                if(vue.isJson()){
+                    Gson json = new Gson();
+                    String jsonString = json.toJson(vue.getData());
+                    out.print(jsonString);
+                }else{
+                    RequestDispatcher dispatch = request.getRequestDispatcher(page);
+                    dispatch.forward(request, response);
+                }
             }
             int x = 8;
         } catch (Exception e) {
@@ -208,7 +216,7 @@ public class FrontServlet extends HttpServlet {
                 objet = obj;
                 this.getSingleton().put(className, objet);
             }else{
-                //reset(obj);
+                reset(obj);
                 objet = obj;
             }
         }
